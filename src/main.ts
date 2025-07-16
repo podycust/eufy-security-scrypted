@@ -304,6 +304,9 @@ class EufyPlugin extends ScryptedDeviceBase implements DeviceProvider, Settings 
     if (eufyDevice.hasProperty('motionDetection'))
       interfaces.push(ScryptedInterface.MotionSensor);
 
+    if (eufyDevice.isDoorbell)
+      interfaces.push(ScryptedInterface.BinarySensor)
+
     const device: Device = {
       info: {
         model: eufyDevice.getModel(),
@@ -313,7 +316,7 @@ class EufyPlugin extends ScryptedDeviceBase implements DeviceProvider, Settings 
       },
       nativeId,
       name: eufyDevice.getName(),
-      type: ScryptedDeviceType.Camera,
+      type: eufyDevice.isBatteryDoorbell ? ScryptedDeviceType.Doorbell : ScryptedDeviceType.Camera,
       interfaces,
     };
 //eufy.PropertyName.DeviceBattery
