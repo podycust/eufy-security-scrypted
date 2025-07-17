@@ -14,12 +14,32 @@ const { deviceManager, mediaManager, systemManager } = sdk;
 class EufyCamera extends ScryptedDeviceBase implements VideoCamera, MotionSensor {
   client: EufySecurity;
   device: eufy.Camera;
+  buttontimeout: NodeJS.Timeout;
 
   constructor(nativeId: string, client: EufySecurity, device: eufy.Camera) {
     super(nativeId);
     this.client = client;
     this.device = device;
     this.setupMotionDetection();
+    this.binaryState = false;
+    this.setupbellpressed()
+  }
+
+  //this.device.on(PropertyName.DeviceSensorOpen)
+
+  bellpushed() {
+   this.binaryState = true
+   clearTimeout(this.buttontimeout)
+   this.buttontimeout = setTimeout(() => this.binaryState = false, 10000);
+
+  }
+
+  setupbellpressed() {
+    const handle = (device: eufy.Device, state: boolean) => {
+      this.console.debug("Door Bell Pressed!")
+      this.bellpushed()
+    };
+    this.device.on("rings" , handle)
   }
 
   setupMotionDetection() {
@@ -29,6 +49,9 @@ class EufyCamera extends ScryptedDeviceBase implements VideoCamera, MotionSensor
     };
     this.device.on('motion detected', handle);
     this.device.on('person detected', handle);
+    this.device.on('package delivered', handle);
+    this.device.on('package stranded', handle);
+    this.device.on('package taken', handle);
     this.device.on('pet detected', handle);
     this.device.on('vehicle detected', handle);
     this.device.on('dog detected', handle);
@@ -296,6 +319,8 @@ class EufyPlugin extends ScryptedDeviceBase implements DeviceProvider, Settings 
     ];
     this.console.info(interfaces)
     this.console.debug("battery: ", eufyDevice.getPropertyValue(PropertyName.DeviceBattery))
+    this.console.debug("Is a Doorbell?", eufyDevice.isDoorbell())
+    this.console.debug("DEvice Type:", eufyDevice.getDeviceType())
     if (eufyDevice.hasBattery())
       interfaces.push(ScryptedInterface.Battery);
       this.batteryLevel = eufyDevice.getPropertyValue(PropertyName.DeviceBattery) as number
